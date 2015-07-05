@@ -4,7 +4,7 @@ Crypto auditing tool for Prolaag VPN
 ### Usage
 
 ```bash
-**./ucrypt.rb [options...] <host>**
+./ucrypt.rb [options...] <host>
 
 options: [-k key] [-i iv] [-x extra] [-p payload] [-t bytes] [-d] [-h] [-c] [-o] <host>
   -k: 256 bit AES key (in hex)
@@ -24,7 +24,7 @@ Performing a simple encryption/decryption cycle
 ```bash
 # Assuming UCrypt service being served by 10.1.1.1
 #   -p: read the plaintext to be encrypted from command line rather than stdin
-**./ucrypt.rb -p "This is only a test." 10.1.1.1**
+./ucrypt.rb -p "This is only a test." 10.1.1.1
 
     Encrypting 32 bytes on 10.1.1.1
     Extra: 0
@@ -41,7 +41,7 @@ Performing a simple encryption/decryption cycle
 # 12 padding bytes were added to plaintext, so we need to trim them on decryption
 #   -o: output raw bytes instead of hex
 #   -t: trim bytes off the decrypted plaintext (to remove padding)
-**./ucrypt.rb -p "This is only a test." -o 10.1.1.1 | ./ucrypt.rb -d -o -t 12 10.1.1.1**
+./ucrypt.rb -p "This is only a test." -o 10.1.1.1 | ./ucrypt.rb -d -o -t 12 10.1.1.1
 
     Decrypting 32 bytes on 10.1.1.1
     Extra: 0
