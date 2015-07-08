@@ -74,6 +74,7 @@ if $0 == __FILE__
   payload = nil
   cstyle = false
   octets = false
+  quiet = false
   ucrypt = UCrypt.new
 
   # Gather our command line options
@@ -98,12 +99,14 @@ if $0 == __FILE__
       cstyle = true
     elsif arg == '-o'
       octets = true
+    elsif arg == '-q'
+      quiet = true
     elsif arg == '-t'
       ucrypt.trim = opts.shift.to_i
     elsif arg == '-?'
       $stderr.puts "Usage: #{$0} [options...] <host>"
       $stderr.puts "options: [-k key] [-i iv] [-x extra] [-p payload] [-t bytes]"
-      $stderr.puts "         [-d] [-h] [-c] [-o] <host>"
+      $stderr.puts "         [-d] [-h] [-c] [-o] [-q] <host>"
       $stderr.puts "  -k: 256 bit AES key (in hex)"
       $stderr.puts "  -i: 16 byte initialization vector (in hex)"
       $stderr.puts "  -x: extra en/decryption rounds for perf tests"
@@ -113,6 +116,7 @@ if $0 == __FILE__
       $stderr.puts "  -h: use hardware instead of software"
       $stderr.puts "  -c: output result in C-style hex"
       $stderr.puts "  -o: output raw octets instead of hex"
+      $stderr.puts "  -q: only output the result of the operation (no metadata)"
       exit(0)
     elsif opts.empty?
       ucrypt.host = arg
@@ -133,14 +137,16 @@ if $0 == __FILE__
 
   # Describe the operation we're about to perform
   op = (ucrypt.flags[0] == 0 ? 'Encrypt' : 'Decrypt')
-  $stderr.puts "#{op}ing #{(payload.length + 15) / 16 * 16} bytes on #{ucrypt.host}"
-  $stderr.puts "Extra: #{ucrypt.extra}"
-  $stderr.puts "Flags: #{'%b' % ucrypt.flags}"
-  $stderr.print "Key:   "
-  ucrypt.key.each_byte { |b| $stderr.print('%02x' % b) }
-  $stderr.print "\nIV:    "
-  ucrypt.iv.each_byte { |b| $stderr.print('%02x' % b) }
-  $stderr.puts "\n========================"
+  unless quiet
+    $stderr.puts "#{op}ing #{(payload.length + 15) / 16 * 16} bytes on #{ucrypt.host}"
+    $stderr.puts "Extra: #{ucrypt.extra}"
+    $stderr.puts "Flags: #{'%b' % ucrypt.flags}"
+    $stderr.print "Key:   "
+    ucrypt.key.each_byte { |b| $stderr.print('%02x' % b) }
+    $stderr.print "\nIV:    "
+    ucrypt.iv.each_byte { |b| $stderr.print('%02x' % b) }
+    $stderr.puts "\n========================"
+  end
 
   # Request that our operation be performed
   resp, local = ucrypt.process(payload)
@@ -148,7 +154,7 @@ if $0 == __FILE__
   # Now output the result in the requested format
   if octets
     print resp
-    $stderr.puts
+    $stderr.puts unless quiet
   else
     i = 0
     resp.each_byte do |b|
@@ -164,8 +170,10 @@ if $0 == __FILE__
   end
 
   # Finally, provide timing information
-  $stderr.puts "========================"
-  $stderr.puts "Local time:  #{'%8d' % (local * 1000000).to_i} microseconds"
-  trim = resp.length - payload.length
-  $stderr.puts "Trim #{trim} bytes" if trim > 0
+  unless quiet
+    $stderr.puts "========================"
+    $stderr.puts "Local time:  #{'%8d' % (local * 1000000).to_i} microseconds"
+    trim = resp.length - payload.length
+    $stderr.puts "Trim #{trim} bytes" if trim > 0
+  end
 end
